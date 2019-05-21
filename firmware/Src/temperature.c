@@ -6,6 +6,7 @@
 
 fifo_def fifo_rx, fifo_tx;
 ush_def ush;
+uint8_t flag_auto_send = 1;
 
 void usb2stream_init(void){
 	static uint8_t rxbuff[256], txbuff[512], ush_buff[256];
@@ -33,6 +34,9 @@ void temperature_main(void){
       snprintf(str, 8, "%.2fC", temp);
       str[6] = 0; //only display 5 characters.
       displed_str(str);
+      if(flag_auto_send){
+        USH_Print("temp: %f\n", temp);
+      }
     }
     if(CDC_is_busy() == 0){
       data_count = fifo_status(&fifo_tx);
@@ -51,9 +55,11 @@ void temperature_main(void){
 	}
 }
 
-uint32_t eis_go(uint32_t para1, uint32_t para2){
+uint32_t disable_auto_send(uint32_t para1, uint32_t para2){
+  flag_auto_send = 0;
   return 0;
 }
+USH_REGISTER(disable_auto_send, disautoread, disable auto read option);\
 
 #ifdef __GNUC__
 int _write(int file, char *ptr, int len)

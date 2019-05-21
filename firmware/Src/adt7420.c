@@ -4,6 +4,11 @@
 #include "ush.h"
 
 float latest_temp;
+
+void adt7420_write_reg(uint8_t regaddr, uint8_t data){
+	IIC_WriteOneByte(ADT7420_ADDR,regaddr,data);
+}
+
 float adt7420_read_temp(void){
   int16_t temp;
 	uint8_t data;
@@ -13,6 +18,7 @@ float adt7420_read_temp(void){
 	IIC_ReadOneByte(ADT7420_ADDR,1,&data);
   temp |= data;
   latest_temp = temp*0.0078f;
+  adt7420_write_reg(3, 0x80|(1<<5));  //16bit resolution. one shot 
 	return latest_temp;
 }
 
@@ -20,10 +26,6 @@ void cmd_read_temp(void){
   USH_Print("temp: %f\n", latest_temp);
 }
 USH_REGISTER(cmd_read_temp, readtemp, read latest temperature);
-
-void adt7420_write_reg(uint8_t regaddr, uint8_t data){
-	IIC_WriteOneByte(ADT7420_ADDR,regaddr,data);
-}
 
 uint8_t adt7420_readid(void){
 	uint8_t data;
@@ -45,7 +47,7 @@ void adt7420_init(void){
   GPIO_InitStruct.Mode      = GPIO_MODE_OUTPUT_OD;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
   IIC_Init();
-  adt7420_write_reg(3, 0x80|0x40);  //1sps, 16bit resolution. 
+  adt7420_write_reg(3, 0x80|(1<<5));  //16bit resolution. one shot 
   adt7420_read_temp();
   id = adt7420_readid();
   printf("adt7420 id: 0x%02x\n", id);
